@@ -1,0 +1,132 @@
+<html lang="en">
+
+<head>
+    <title>ml5.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.0.0/addons/p5.sound.min.js"></script>
+</head>
+
+<body onload="pageOnload()" style='position: relative;'>
+    <video id="video" autoplay="true" style="transform: rotateY(180deg);"></video>
+    <canvas id="myCanvas" style="position: absolute;z-index: 10;left: 0;" width="640" height="480"></canvas>
+    <br>
+    <button onclick="phone()">开</button>
+    <button onclick="shubiao()">半开</button>
+    <button onclick="cape()">盒</button>
+    <br>
+    <br>
+    <button onclick="train()">训练</button>
+    <button onclick="classify()">分类</button>
+    <br>
+    <br>
+    <button onclick="savemode()">导出模型</button>
+    <input type="file" id="imgmode" multiple="multiple">
+    <button onclick="import1()">导入模型</button>
+    <img id="scream" src="./images/OIP (2).jpeg" alt="" style="display: none;">
+    <script>
+        // console.log('ml5 version:', ml5.version);
+        var video=null;
+        var featureExtractor=null;
+        var classifier= null;
+        var canvas
+        var c=document.getElementById("myCanvas");
+        var ctx=c.getContext("2d");
+        var img11=document.getElementById("scream");
+        function pageOnload(){
+            video = document.getElementById('video')
+            // video.style('transform','rotateY(180deg)');
+            initVideo();
+            initClassiFy()
+            
+        }
+        // canvas = createCanvas(640,480,WEBGL)
+        //     canvas.style('position:absloute;z-index:10;')
+        // function setup(){
+            
+        // }
+        function savemode(){
+            classifier.save()
+        }
+        function import1(){
+            var files = document.getElementById('imgmode');
+            classifier.load(files.files,function(){})
+        }
+        function initVideo(){
+           
+            if(!navigator.mediaDevices.getUserMedia) return;
+            
+            navigator.mediaDevices.getUserMedia({video: true})
+            .then(strem=>{
+                
+                video.srcObject = strem;
+            }).catch(err=>{
+                
+                console.log(err);
+            })
+            
+        }
+        function initClassiFy(){
+            featureExtractor = ml5.featureExtractor('MobileNet', modelLoaded);
+           
+            
+        }
+        // When the model is loaded
+        function modelLoaded() {
+            console.log('Model Loaded!');
+            // classifier = featureExtractor.classification(video, function(){
+            //     console.log('The video is ready!');
+            // });
+            classifier = featureExtractor.regression(video, function(){
+                console.log('The video is ready!');
+            });
+           
+        }
+        function phone(){
+            classifier.addImage(1,function(){
+                console.log('开')
+            })
+        }
+        function shubiao(){
+            classifier.addImage(0.5,function(){
+                console.log('半开')
+            })
+        }
+        function cape(){
+            classifier.addImage(0,function(){
+                console.log('盒')
+            })
+        }
+        function train(){
+            classifier.train((lossValue) => {
+                console.log(lossValue);
+            });
+        }
+        function classify(){
+            
+            // classifier.classify((err, result) => {
+            //     console.log( JSON.stringify(result)); // Should output 'dog'
+            // });
+            setInterval(()=>{
+                classifier.predict((err, result) => {
+                    // console.log( result.value); // Should output 'dog'
+                    ctx.clearRect(0,0,c.width,c.height);
+                    drow(result.value);
+                });
+            },100)
+            
+        }
+        
+        function drow(value){
+            // console.log(value)
+
+
+            ctx.drawImage(img11,300,220,50*(1+value*3),50*(1+value*3))
+
+        }
+
+    </script>
+</body>
+
+</html>
